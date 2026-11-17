@@ -91,11 +91,249 @@
     }
 
     /* ============================================================ */
+    /* Bouton d'action Lien Externe                                 */
+    /* ============================================================ */
+    .link-action-container {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .link-action-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 14px) scale(0.94);
+    }
+
+    .link-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+      text-decoration: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(37, 99, 235, 0.45);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .link-action-btn:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95));
+      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .link-action-btn:active {
+      transform: scale(0.96);
+    }
+
+    .link-action-icon {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================ */
     /* Canvas de détection caché (grayscale interne)               */
     /* Le flux caméra visible reste en couleur                      */
     /* ============================================================ */
     #grayscale-processing-canvas {
       display: none !important;
+    }
+
+    /* ============================================================ */
+    /* Indication animée : Scanner la carte                         */
+    /* ============================================================ */
+    .scan-prompt-container {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99998;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .scan-prompt-container.hidden {
+      opacity: 0;
+      transform: translate(-50%, 15px);
+    }
+
+    .scan-prompt-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 22px;
+      border-radius: 40px;
+      background: rgba(15, 15, 25, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+      animation: pulse-float 2.4s ease-in-out infinite;
+    }
+
+    .scan-prompt-icon {
+      width: 22px;
+      height: 22px;
+      stroke: #60a5fa;
+      flex-shrink: 0;
+      animation: scan-radar 2s ease-in-out infinite;
+    }
+
+    .scan-prompt-text {
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14.5px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .scan-prompt-reticle {
+      width: 74px;
+      height: 74px;
+      position: relative;
+      opacity: 0.85;
+      animation: pulse-reticle 2.4s ease-in-out infinite;
+    }
+
+    .scan-prompt-reticle::before,
+    .scan-prompt-reticle::after,
+    .scan-prompt-reticle span::before,
+    .scan-prompt-reticle span::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: rgba(255, 255, 255, 0.85);
+      border-style: solid;
+    }
+
+    /* Coin haut-gauche */
+    .scan-prompt-reticle::before {
+      top: 0;
+      left: 0;
+      border-width: 2.5px 0 0 2.5px;
+      border-radius: 4px 0 0 0;
+    }
+
+    /* Coin haut-droit */
+    .scan-prompt-reticle::after {
+      top: 0;
+      right: 0;
+      border-width: 2.5px 2.5px 0 0;
+      border-radius: 0 4px 0 0;
+    }
+
+    /* Coin bas-gauche */
+    .scan-prompt-reticle span::before {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 2.5px 2.5px;
+      border-radius: 0 0 0 4px;
+    }
+
+    /* Coin bas-droit */
+    .scan-prompt-reticle span::after {
+      bottom: 0;
+      right: 0;
+      border-width: 0 2.5px 2.5px 0;
+      border-radius: 0 0 4px 0;
+    }
+
+    /* Ligne laser qui balaie la cible */
+    .scan-prompt-laser {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #60a5fa, #93c5fd, #60a5fa, transparent);
+      box-shadow: 0 0 8px #60a5fa;
+      border-radius: 2px;
+      animation: laser-sweep 1.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+      }
+
+      50% {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 36px rgba(96, 165, 250, 0.25);
+      }
+    }
+
+    @keyframes pulse-reticle {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.06);
+        opacity: 1;
+      }
+    }
+
+    @keyframes laser-sweep {
+      0% {
+        top: 6px;
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        top: calc(100% - 8px);
+        opacity: 0.3;
+      }
+    }
+
+    @keyframes scan-radar {
+
+      0%,
+      100% {
+        transform: rotate(0deg) scale(1);
+      }
+
+      50% {
+        transform: rotate(15deg) scale(1.1);
+      }
     }
   </style>
 </head>
@@ -165,7 +403,8 @@
     <!-- [ CIBLE 0 ] →  IMAGE 1 (singe1.jpeg)                          -->
     <!-- targetIndex: 0 = 1ère image dans targets.mind                -->
     <!-- ============================================================ -->
-    <a-entity mindar-image-target="targetIndex: 0">
+    <a-entity mindar-image-target="targetIndex: 0" data-link="https://www.instagram.com/shoot_art.kenny/"
+      data-link-text="Réseaux sociaux">
       <a-plane src="#image-cible1" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339"
         height="0.5625" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
         material="src: #image-cible1; shader: flat; transparent: true"
@@ -540,6 +779,39 @@
   </script>
 
   <!-- ============================================================ -->
+  <!-- Interface UI Caméra : Bouton Lien Externe                   -->
+  <!-- Visible uniquement si la cible active possède un lien       -->
+  <!-- ============================================================ -->
+  <div id="link-action-container" class="link-action-container hidden">
+    <a id="link-action-btn" class="link-action-btn" href="https://www.instagram.com/shoot_art.kenny/" target="_blank"
+      rel="noopener noreferrer">
+      <span id="link-action-text">En savoir plus</span>
+      <svg class="link-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <line x1="10" y1="14" x2="21" y2="3"></line>
+      </svg>
+    </a>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- Interface UI Caméra : Message d'aide "Scannez la carte"      -->
+  <!-- ============================================================ -->
+  <div id="scan-prompt" class="scan-prompt-container">
+    <div class="scan-prompt-pill">
+      <svg class="scan-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="7" y1="8" x2="17" y2="8"></line>
+        <line x1="7" y1="12" x2="17" y2="12"></line>
+        <line x1="7" y1="16" x2="12" y2="16"></line>
+      </svg>
+      <span class="scan-prompt-text">Pointez la caméra vers la carte</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
   <!-- Interface UI Caméra : Bouton pour couper / activer le son    -->
   <!-- Visible uniquement lorsqu'une vidéo est détectée à la caméra -->
   <!-- ============================================================ -->
@@ -563,6 +835,117 @@
   </div>
 
   <script>
+    // ============================================================
+    // Gestion du Bouton Lien Externe
+    // ============================================================
+    (function () {
+      const linkContainer = document.getElementById("link-action-container");
+      const linkBtn = document.getElementById("link-action-btn");
+      const linkText = document.getElementById("link-action-text");
+      if (!linkContainer || !linkBtn) return;
+
+      // Map des cibles actuellement visibles ayant un lien
+      const visibleLinks = new Map();
+
+      function updateLinkUI() {
+        if (visibleLinks.size === 0) {
+          linkContainer.classList.add("hidden");
+          return;
+        }
+
+        // Récupère la dernière cible détectée
+        const lastEntry = Array.from(visibleLinks.values()).pop();
+        if (lastEntry && lastEntry.url) {
+          linkBtn.href = lastEntry.url;
+          if (linkText) {
+            linkText.textContent = lastEntry.text || "En savoir plus";
+          }
+          linkContainer.classList.remove("hidden");
+        } else {
+          linkContainer.classList.add("hidden");
+        }
+      }
+
+      function setupExternalLinks() {
+        const targets = document.querySelectorAll("[mindar-image-target]");
+        targets.forEach((target, index) => {
+          target.addEventListener("targetFound", () => {
+            // Cherche un attribut data-link sur la cible ou ses enfants
+            const link = target.getAttribute("data-link") ||
+              target.querySelector("[data-link]")?.getAttribute("data-link");
+            const text = target.getAttribute("data-link-text") ||
+              target.querySelector("[data-link-text]")?.getAttribute("data-link-text") ||
+              "En savoir plus";
+
+            if (link && link.trim() !== "") {
+              visibleLinks.set(index, { url: link.trim(), text: text.trim() });
+            }
+            updateLinkUI();
+          });
+
+          target.addEventListener("targetLost", () => {
+            visibleLinks.delete(index);
+            updateLinkUI();
+          });
+        });
+      }
+
+      const sceneEl = document.querySelector("a-scene");
+      if (sceneEl) {
+        if (sceneEl.hasLoaded) {
+          setupExternalLinks();
+        } else {
+          sceneEl.addEventListener("loaded", setupExternalLinks);
+        }
+      } else {
+        window.addEventListener("DOMContentLoaded", setupExternalLinks);
+      }
+    })();
+
+    // ============================================================
+    // Gestion de l'affichage du guide "Scanner la carte"
+    // ============================================================
+    (function () {
+      const scanPrompt = document.getElementById("scan-prompt");
+      if (!scanPrompt) return;
+
+      const activeFoundTargets = new Set();
+
+      function updatePromptVisibility() {
+        if (activeFoundTargets.size > 0) {
+          scanPrompt.classList.add("hidden");
+        } else {
+          scanPrompt.classList.remove("hidden");
+        }
+      }
+
+      function setupScanPromptListeners() {
+        const targets = document.querySelectorAll("[mindar-image-target]");
+        targets.forEach((target, index) => {
+          target.addEventListener("targetFound", () => {
+            activeFoundTargets.add(index);
+            updatePromptVisibility();
+          });
+
+          target.addEventListener("targetLost", () => {
+            activeFoundTargets.delete(index);
+            updatePromptVisibility();
+          });
+        });
+      }
+
+      const sceneEl = document.querySelector("a-scene");
+      if (sceneEl) {
+        if (sceneEl.hasLoaded) {
+          setupScanPromptListeners();
+        } else {
+          sceneEl.addEventListener("loaded", setupScanPromptListeners);
+        }
+      } else {
+        window.addEventListener("DOMContentLoaded", setupScanPromptListeners);
+      }
+    })();
+
     // ============================================================
     // Gestion des vidéos et du son (Mute / Unmute)
     // - Le bouton s'affiche dès qu'une cible vidéo est visible
