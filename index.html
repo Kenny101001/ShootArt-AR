@@ -1,0 +1,693 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Configuration résolution caméra HD 720p -->
+  <script>
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const _origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function (constraints) {
+        if (constraints && constraints.video) {
+          if (typeof constraints.video === 'object') {
+            constraints.video.width = { ideal: 1280, min: 720 };
+            constraints.video.height = { ideal: 720, min: 480 };
+          }
+        }
+        return _origGetUserMedia(constraints);
+      };
+    }
+  </script>
+
+  <!-- Inclusion des bibliothèques A-Frame et MindAR -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <!-- Style pour le contrôle du son de la vidéo en AR -->
+  <style>
+    /* Bouton flottant de contrôle du son */
+    .sound-control-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sound-control-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px) scale(0.92);
+    }
+
+    .sound-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 50px;
+      background: rgba(15, 15, 20, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+    }
+
+    .sound-btn:hover {
+      background: rgba(25, 25, 35, 0.85);
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .sound-btn:active {
+      transform: scale(0.95);
+    }
+
+    .sound-icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      flex-shrink: 0;
+    }
+
+    .sound-icon.hidden {
+      display: none !important;
+    }
+
+    .sound-label {
+      line-height: 1;
+    }
+
+    /* ============================================================ */
+    /* Canvas de détection caché (grayscale interne)               */
+    /* Le flux caméra visible reste en couleur                      */
+    /* ============================================================ */
+    #grayscale-processing-canvas {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Scène AR -->
+  <a-scene
+    mindar-image="imageTargetSrc: ./Assets/targets.mind; filterMinCF: 0.001; filterBeta: 0.01; warmupTolerance: 2; missTolerance: 15;"
+    color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <!-- ============================================================ -->
+    <!--                     ZONE DES ASSETS                          -->
+    <!-- Ajoutez ici vos fichiers vidéo, image et modèle 3D          -->
+    <!-- ============================================================ -->
+    <a-assets>
+
+      <!-- [ CIBLE 0 ] Vidéo existante -->
+      <!-- <video id="arVideo" src="./AnimationLogo.mp4" preload="auto" loop playsinline webkit-playsinline
+        crossorigin="anonymous"></video> -->
+
+      <!-- <video id="arVideo2" src="./Devaflamme.mp4" preload="auto" loop playsinline webkit-playsinline
+        crossorigin="anonymous"></video> -->
+
+      <!-- ---------------------------------------------------------- -->
+      <!-- [ CIBLE 1 ] IMAGE → Remplacez le src par votre image      -->
+      <!-- ---------------------------------------------------------- -->
+      <img id="image-cible1" src="./Assets/singe1.jpeg" crossorigin="anonymous" />
+      <img id="image-cible2" src="./singe2.jpeg" crossorigin="anonymous" />
+      <img id="image-cible3" src="./singe3.jpg" crossorigin="anonymous" />
+
+
+
+      <!-- ---------------------------------------------------------- -->
+      <!-- [ CIBLE 2 ] MODÈLE 3D → Remplacez le src par votre .glb  -->
+      <!-- ---------------------------------------------------------- -->
+
+
+      <!-- ---------------------------------------------------------- -->
+      <!-- [ CIBLE 3 ] VIDÉO → Remplacez le src par votre vidéo     -->
+      <!-- ---------------------------------------------------------- -->
+      <!-- <video id="video-cible3" src="./VOTRE_VIDEO.mp4" preload="auto" loop playsinline webkit-playsinline
+        crossorigin="anonymous"></video> -->
+
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- ============================================================ -->
+    <!-- [ CIBLE 0 ] → VIDÉO (AnimationLogo.mp4)                    -->
+    <!-- targetIndex: 0 = 1ère image dans targets.mind               -->
+    <!-- ============================================================ -->
+    <!-- <a-entity mindar-image-target="targetIndex: 0"> -->
+    <!-- a-plane affiche la vidéo comme texture sur un plan plat -->
+    <!-- Ajustez width/height selon le ratio de votre vidéo (ex: 16:9 → width="1.6" height="0.9") -->
+    <!-- <a-plane
+          src="#arVideo"
+          position="0 0 0"
+          width="1"
+          height="0.55"
+          rotation="0 0 0"
+          material="src: #arVideo; shader: flat"
+        ></a-plane>
+      </a-entity> -->
+
+    <!-- ============================================================ -->
+    <!-- [ CIBLE 0 ] →  IMAGE 1 (singe1.jpeg)                          -->
+    <!-- targetIndex: 0 = 1ère image dans targets.mind                -->
+    <!-- ============================================================ -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-plane src="#image-cible1" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339"
+        height="0.5625" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
+        material="src: #image-cible1; shader: flat; transparent: true"
+        scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
+    </a-entity>
+
+    <!-- ============================================================ -->
+    <!-- [ CIBLE 1 ] →  IMAGE 2 (singe2.jpeg)                          -->
+    <!-- targetIndex: 1 = 2ème image dans targets.mind                -->
+    <!-- ============================================================ -->
+    <!-- <a-entity mindar-image-target="targetIndex: 1">
+      <a-plane src="#image-cible2" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 1.4989" width="1"
+        height="0.75" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
+        material="src: #image-cible2; shader: flat; transparent: true"
+        scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
+    </a-entity> -->
+
+    <!-- ============================================================ -->
+    <!-- [ CIBLE 2 ] →  IMAGE 3 (singe3.jpg)                           -->
+    <!-- targetIndex: 2 = 3ème image dans targets.mind                -->
+    <!-- ============================================================ -->
+    <!-- <a-entity mindar-image-target="targetIndex: 2">
+      <a-plane src="#image-cible3" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 1.5" width="0.8438"
+        height="1.5" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
+        material="src: #image-cible3; shader: flat; transparent: true"
+        scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
+    </a-entity> -->
+
+    <!-- ============================================================ -->
+    <!-- [ CIBLE 3 ] → VIDÉO supplémentaire                          -->
+    <!-- targetIndex: 3 = 4ème image dans targets.mind               -->
+    <!-- ============================================================ -->
+
+    <!-- <a-entity mindar-image-target="targetIndex: 3"> -->
+
+    <!-- <a-plane
+          src="#video-cible3"
+          position="0 0 0"
+          width="1"
+          height="0.55"
+          rotation="0 0 0"
+          material="src: #video-cible3; shader: flat"
+        ></a-plane>
+      </a-entity> -->
+
+  </a-scene>
+
+  <script>
+    // ============================================================
+    // DUAL-CANVAS : Affichage couleur + Détection grayscale
+    // ─────────────────────────────────────────────────────────────
+    // Principe :
+    //   1. MindAR lit le flux caméra depuis l'élément <video>
+    //   2. On intercepte le drawImage() de son canvas interne
+    //   3. Avant chaque frame, on applique filter:grayscale en JS
+    //      sur un canvas caché → MindAR analyse une image N&B
+    //   4. Le <video> visible reste intact → affichage en couleur
+    // ─────────────────────────────────────────────────────────────
+    (function () {
+      // On patche le getContext de HTMLCanvasElement AVANT que
+      // MindAR crée ses canvas, pour intercepter drawImage()
+      const _origGetContext = HTMLCanvasElement.prototype.getContext;
+
+      HTMLCanvasElement.prototype.getContext = function (type, options) {
+        const ctx = _origGetContext.call(this, type, options);
+
+        // On ne patche que les canvas 2D créés avant l'élément WebGL
+        // (MindAR utilise un canvas 2D pour capturer les frames vidéo)
+        if (type === '2d' && ctx && !this._grayPatched) {
+          this._grayPatched = true;
+          const _origDrawImage = ctx.drawImage;
+
+          ctx.drawImage = function (source, ...args) {
+            // Si la source est un élément <video>, on applique
+            // grayscale + boost contraste avant le dessin
+            if (source instanceof HTMLVideoElement) {
+              const prevFilter = ctx.filter;
+              ctx.filter = 'grayscale(1) contrast(1.15)';
+              _origDrawImage.apply(ctx, [source, ...args]);
+              ctx.filter = prevFilter || 'none';
+            } else {
+              // Pour tout autre source (image, canvas…) : dessin normal
+              _origDrawImage.apply(ctx, [source, ...args]);
+            }
+          };
+        }
+        return ctx;
+      };
+    })();
+
+    // ============================================================
+    // Composant touch-rotate
+    // - Auto-rotation continue sur l'axe Y
+    // - Drag tactile pour faire tourner manuellement
+    // ============================================================
+    AFRAME.registerComponent('touch-rotate', {
+      schema: {
+        axis: { type: 'string', default: 'y' },   // Axe local : 'y' (hauteur de l'objet) ou 'z'
+        autoSpeed: { type: 'number', default: 0.008 }, // Vitesse auto-rotation (radians/frame)
+        dragSpeed: { type: 'number', default: 0.01 }  // Sensibilité tactile
+      },
+      init: function () {
+        this.isDragging = false;
+        this.autoRotate = true;
+        this.prevTouchX = 0;
+        this.resumeTimer = null;
+
+        // Fonction de rotation locale sur son propre axe
+        this.rotateSelf = (rad) => {
+          if (this.data.axis === 'z') {
+            this.el.object3D.rotateZ(rad);
+          } else if (this.data.axis === 'x') {
+            this.el.object3D.rotateX(rad);
+          } else {
+            this.el.object3D.rotateY(rad);
+          }
+        };
+
+        // --- Tactile (mobile) ---
+        window.addEventListener('touchstart', (e) => {
+          if (!e.touches || e.touches.length === 0) return;
+          this.isDragging = true;
+          this.autoRotate = false;
+          this.prevTouchX = e.touches[0].clientX;
+          clearTimeout(this.resumeTimer);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          if (!this.isDragging || !e.touches || e.touches.length === 0) return;
+          const dx = e.touches[0].clientX - this.prevTouchX;
+          this.rotateSelf(dx * this.data.dragSpeed);
+          this.prevTouchX = e.touches[0].clientX;
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+          this.isDragging = false;
+          this.resumeTimer = setTimeout(() => {
+            this.autoRotate = true;
+          }, 1500);
+        }, { passive: true });
+
+        // --- Souris (PC / émulateur) ---
+        window.addEventListener('mousedown', (e) => {
+          this.isDragging = true;
+          this.autoRotate = false;
+          this.prevTouchX = e.clientX;
+          clearTimeout(this.resumeTimer);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!this.isDragging) return;
+          const dx = e.clientX - this.prevTouchX;
+          this.rotateSelf(dx * this.data.dragSpeed);
+          this.prevTouchX = e.clientX;
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (!this.isDragging) return;
+          this.isDragging = false;
+          this.resumeTimer = setTimeout(() => {
+            this.autoRotate = true;
+          }, 1500);
+        });
+      },
+
+      tick: function () {
+        if (this.autoRotate && !this.isDragging) {
+          this.rotateSelf(this.data.autoSpeed);
+        }
+      }
+    });
+
+    // ============================================================
+    // Composant scale-on-target
+    // - Apparition  : scale 0→cible avec easeOutBack (effet pop)
+    // - Disparition : scale cible→0 avec easeInBack (effet shrink)
+    // ============================================================
+    AFRAME.registerComponent('scale-on-target', {
+      schema: {
+        targetScale: { type: 'vec3', default: { x: 1, y: 1, z: 1 } },
+        durIn: { default: 700 }, // durée apparition  (ms)
+        durOut: { default: 400 }  // durée disparition (ms)
+      },
+
+      init: function () {
+        // L'objet part invisible (scale 0)
+        this.el.setAttribute('scale', '0 0 0');
+
+        const s = this.data.targetScale;
+        const to = `${s.x} ${s.y} ${s.z}`;
+
+        // Écoute les événements sur le parent (a-entity mindar-image-target)
+        const parent = this.el.parentEl;
+
+        parent.addEventListener('targetFound', () => {
+          // Annule toute animation en cours
+          this.el.removeAttribute('animation__scaleout');
+          this.el.setAttribute('animation__scalein', {
+            property: 'scale',
+            from: '0 0 0',
+            to: to,
+            dur: this.data.durIn,
+            easing: 'easeOutBack'
+          });
+        });
+
+        parent.addEventListener('targetLost', () => {
+          this.el.removeAttribute('animation__scalein');
+          const cur = this.el.getAttribute('scale');
+          this.el.setAttribute('animation__scaleout', {
+            property: 'scale',
+            from: `${cur.x} ${cur.y} ${cur.z}`,
+            to: '0 0 0',
+            dur: this.data.durOut,
+            easing: 'easeInBack'
+          });
+        });
+      }
+    });
+
+    // ============================================================
+    // Composant video-aspect-ratio
+    // Détecte automatiquement la résolution réelle de la vidéo et
+    // ajuste la hauteur/largeur du plan pour éviter toute déformation
+    // ============================================================
+    AFRAME.registerComponent('video-aspect-ratio', {
+      schema: {
+        baseWidth: { type: 'number', default: 1 }
+      },
+      init: function () {
+        const el = this.el;
+        const baseW = this.data.baseWidth;
+
+        const applyRatio = (video) => {
+          if (!video || !video.videoWidth || !video.videoHeight) return;
+          const ratio = video.videoHeight / video.videoWidth;
+          el.setAttribute('width', baseW);
+          el.setAttribute('height', (baseW * ratio).toFixed(4));
+        };
+
+        const checkVideo = () => {
+          const src = el.getAttribute('src');
+          let video = null;
+          if (typeof src === 'string' && src.startsWith('#')) {
+            video = document.querySelector(src);
+          }
+          if (video) {
+            if (video.readyState >= 1) {
+              applyRatio(video);
+            } else {
+              video.addEventListener('loadedmetadata', () => applyRatio(video), { once: true });
+            }
+          }
+        };
+
+        if (el.sceneEl.hasLoaded) {
+          checkVideo();
+        } else {
+          el.sceneEl.addEventListener('loaded', checkVideo);
+        }
+      }
+    });
+
+    // ============================================================
+    // Composant image-aspect-ratio
+    // Adapte l'image à la taille exacte du support (marqueur AR)
+    // en conservant strictement ses proportions (sans déformation)
+    // ============================================================
+    AFRAME.registerComponent('image-aspect-ratio', {
+      schema: {
+        fit: { type: 'string', default: 'contain' }, // 'contain' (tient dans le support) ou 'cover'
+        baseWidth: { type: 'number', default: 1 },   // Largeur normalisée du marqueur MindAR
+        targetHeight: { type: 'number', default: 0 } // Hauteur du support si connue (0 = détection auto)
+      },
+      init: function () {
+        const el = this.el;
+        const self = this;
+
+        // Ratios de hauteur des supports de référence connus (hauteur / largeur) :
+        // Cible 0 (img1.jpeg, 1600x900)  -> 900/1600 = 0.5625
+        // Cible 1 (img2.jpeg, 870x1304)  -> 1304/870 ≈ 1.4989
+        // Cible 2 (img3.jpeg, 928x1392)  -> 1392/928 = 1.5
+        const defaultTargetHeights = [0.5625, 1.4989, 1.5];
+
+        const getTargetHeight = () => {
+          if (self.data.targetHeight > 0) return self.data.targetHeight;
+
+          const parent = el.closest('[mindar-image-target]') || el.parentEl;
+          const targetIndex = parent ? parseInt(parent.getAttribute('mindar-image-target')?.targetIndex || 0, 10) : 0;
+
+          // Essaye de récupérer les dimensions calculées par MindAR
+          try {
+            const mindarSystem = el.sceneEl?.systems?.['mindar-image-system'];
+            const targetData = mindarSystem?.controller?.targetImages?.[targetIndex];
+            if (targetData && targetData.width && targetData.height) {
+              return (targetData.height / targetData.width) * self.data.baseWidth;
+            }
+          } catch (e) { }
+
+          const knownH = defaultTargetHeights[targetIndex];
+          return (knownH !== undefined ? knownH : 1) * self.data.baseWidth;
+        };
+
+        const applyRatio = (img) => {
+          if (!img || !img.naturalWidth || !img.naturalHeight) return;
+
+          const targetW = self.data.baseWidth;
+          const targetH = getTargetHeight();
+
+          const imgRatio = img.naturalHeight / img.naturalWidth;
+          const targetRatio = targetH / targetW;
+
+          let finalW, finalH;
+
+          if (self.data.fit === 'cover') {
+            // Remplit tout le support sans déformation
+            if (imgRatio > targetRatio) {
+              finalW = targetW;
+              finalH = targetW * imgRatio;
+            } else {
+              finalH = targetH;
+              finalW = targetH / imgRatio;
+            }
+          } else {
+            // Mode 'contain' : s'adapte à la taille du support sans déborder ni déformer
+            if (imgRatio > targetRatio) {
+              finalH = targetH;
+              finalW = targetH / imgRatio;
+            } else {
+              finalW = targetW;
+              finalH = targetW * imgRatio;
+            }
+          }
+
+          el.setAttribute('width', finalW.toFixed(4));
+          el.setAttribute('height', finalH.toFixed(4));
+        };
+
+        const checkImage = () => {
+          let src = el.getAttribute('src');
+          if (!src) {
+            const mat = el.getAttribute('material');
+            if (typeof mat === 'string') {
+              const m = mat.match(/src:\s*(#[a-zA-Z0-9_-]+)/);
+              if (m) src = m[1];
+            } else if (mat && mat.src) {
+              src = mat.src;
+            }
+          }
+          let img = null;
+          if (typeof src === 'string' && src.startsWith('#')) {
+            img = document.querySelector(src);
+          }
+          if (img) {
+            if (img.complete && img.naturalWidth) {
+              applyRatio(img);
+            } else {
+              img.addEventListener('load', () => applyRatio(img), { once: true });
+            }
+          }
+        };
+
+        if (el.sceneEl.hasLoaded) {
+          checkImage();
+        } else {
+          el.sceneEl.addEventListener('loaded', checkImage);
+        }
+
+        el.sceneEl.addEventListener('arReady', checkImage, { once: true });
+      }
+    });
+  </script>
+
+  <!-- ============================================================ -->
+  <!-- Interface UI Caméra : Bouton pour couper / activer le son    -->
+  <!-- Visible uniquement lorsqu'une vidéo est détectée à la caméra -->
+  <!-- ============================================================ -->
+  <div id="sound-control-container" class="sound-control-container hidden">
+    <button id="sound-toggle-btn" class="sound-btn" type="button" aria-label="Couper ou activer le son">
+      <!-- Icône Son Actif -->
+      <svg id="icon-volume-on" class="sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <!-- Icône Son Coupé (Mute) -->
+      <svg id="icon-volume-off" class="sound-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+      <span id="sound-label" class="sound-label">Couper le son</span>
+    </button>
+  </div>
+
+  <script>
+    // ============================================================
+    // Gestion des vidéos et du son (Mute / Unmute)
+    // - Le bouton s'affiche dès qu'une cible vidéo est visible
+    // - Le bouton se masque quand aucune vidéo n'est à l'écran
+    // - Permet de couper ou réactiver le son à tout moment
+    // ============================================================
+    (function () {
+      const soundContainer = document.getElementById("sound-control-container");
+      const soundBtn = document.getElementById("sound-toggle-btn");
+      const iconVolumeOn = document.getElementById("icon-volume-on");
+      const iconVolumeOff = document.getElementById("icon-volume-off");
+      const soundLabel = document.getElementById("sound-label");
+
+      // État global du son (par défaut : son actif)
+      let isMuted = false;
+
+      // Ensemble des vidéos actuellement actives à l'écran
+      const activeVideos = new Set();
+
+      // Met à jour l'apparence du bouton
+      function updateSoundUI() {
+        if (isMuted) {
+          iconVolumeOn.classList.add("hidden");
+          iconVolumeOff.classList.remove("hidden");
+          soundLabel.textContent = "Activer le son";
+          soundBtn.setAttribute("aria-label", "Activer le son");
+        } else {
+          iconVolumeOn.classList.remove("hidden");
+          iconVolumeOff.classList.add("hidden");
+          soundLabel.textContent = "Couper le son";
+          soundBtn.setAttribute("aria-label", "Couper le son");
+        }
+      }
+
+      // Bascule le son quand l'utilisateur clique sur le bouton
+      if (soundBtn) {
+        soundBtn.addEventListener("click", () => {
+          isMuted = !isMuted;
+          const allVideos = document.querySelectorAll("video");
+          allVideos.forEach(v => {
+            v.muted = isMuted;
+          });
+          updateSoundUI();
+        });
+      }
+
+      // Fonction pour identifier si une cible AR contient un plan vidéo
+      function findVideoForTarget(targetEl) {
+        const videoPlane = targetEl.querySelector("a-plane[material*='src'], a-plane[src], [video-aspect-ratio]");
+        if (!videoPlane) return null;
+
+        let videoSrc = videoPlane.getAttribute("src");
+        if (!videoSrc) {
+          const mat = videoPlane.getAttribute("material");
+          if (typeof mat === "string") {
+            const match = mat.match(/src:\s*(#[a-zA-Z0-9_-]+)/);
+            if (match) videoSrc = match[1];
+          } else if (mat && mat.src) {
+            videoSrc = mat.src;
+          }
+        }
+
+        if (typeof videoSrc === "string" && videoSrc.startsWith("#")) {
+          const videoEl = document.querySelector(videoSrc);
+          if (videoEl && videoEl.tagName === "VIDEO") {
+            return videoEl;
+          }
+        }
+        return null;
+      }
+
+      // Configuration des écouteurs pour chaque cible
+      function setupTargets() {
+        const targets = document.querySelectorAll("[mindar-image-target]");
+
+        targets.forEach(target => {
+          const video = findVideoForTarget(target);
+          if (!video) return; // Ignore les cibles qui ne sont pas des vidéos (ex: modèles 3D)
+
+          target.addEventListener("targetFound", () => {
+            activeVideos.add(video);
+            video.muted = isMuted;
+
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(() => {
+                // Fallback autoplay iOS/Chrome si l'audio sans interaction préalable est bloqué
+                isMuted = true;
+                video.muted = true;
+                updateSoundUI();
+                video.play().catch(() => { });
+              });
+            }
+
+            // Affiche le bouton de contrôle du son
+            if (soundContainer) {
+              soundContainer.classList.remove("hidden");
+            }
+          });
+
+          target.addEventListener("targetLost", () => {
+            video.pause();
+            activeVideos.delete(video);
+
+            // Si aucune vidéo n'est visible à l'écran, masquer le bouton
+            if (activeVideos.size === 0 && soundContainer) {
+              soundContainer.classList.add("hidden");
+            }
+          });
+        });
+      }
+
+      // Initialisation dès que la scène est chargée
+      const sceneEl = document.querySelector("a-scene");
+      if (sceneEl) {
+        if (sceneEl.hasLoaded) {
+          setupTargets();
+        } else {
+          sceneEl.addEventListener("loaded", setupTargets);
+        }
+      } else {
+        window.addEventListener("DOMContentLoaded", setupTargets);
+      }
+    })();
+  </script>
+</body>
+
+</html>
