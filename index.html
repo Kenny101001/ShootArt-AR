@@ -347,57 +347,14 @@
 
     <!-- ============================================================ -->
     <!--                     ZONE DES ASSETS                          -->
-    <!-- Ajoutez ici vos fichiers vidéo, image et modèle 3D          -->
+    <!-- Note: Les balises ci-dessous ont été retirées de a-assets    -->
+    <!-- pour éviter le préchargement automatique au démarrage.       -->
+    <!-- Les fichiers sont chargés à la demande via lazy-load ci-bas. -->
     <!-- ============================================================ -->
     <a-assets>
-
-      <!-- [ CIBLE 0 ] Vidéo existante -->
-      <!-- <video id="arVideo" src="./AnimationLogo.mp4" preload="auto" loop playsinline webkit-playsinline
-        crossorigin="anonymous"></video> -->
-
-      <!-- <video id="arVideo2" src="./Devaflamme.mp4" preload="auto" loop playsinline webkit-playsinline
-        crossorigin="anonymous"></video> -->
-
-      <!-- ---------------------------------------------------------- -->
-      <!-- [ CIBLE 1 ] IMAGE → Remplacez le src par votre image      -->
-      <!-- ---------------------------------------------------------- -->
-      <img id="image-cible1" src="./Assets/singe1.jpeg" crossorigin="anonymous" />
-      <!-- <img id="image-cible2" src="./singe2.jpeg" crossorigin="anonymous" />
-      <img id="image-cible3" src="./singe3.jpg" crossorigin="anonymous" /> -->
-
-
-
-      <!-- ---------------------------------------------------------- -->
-      <!-- [ CIBLE 2 ] MODÈLE 3D → Remplacez le src par votre .glb  -->
-      <!-- ---------------------------------------------------------- -->
-
-
-      <!-- ---------------------------------------------------------- -->
-      <!-- [ CIBLE 3 ] VIDÉO → Remplacez le src par votre vidéo     -->
-      <!-- ---------------------------------------------------------- -->
-      <!-- <video id="video-cible3" src="./VOTRE_VIDEO.mp4" preload="auto" loop playsinline webkit-playsinline
-        crossorigin="anonymous"></video> -->
-
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <!-- ============================================================ -->
-    <!-- [ CIBLE 0 ] → VIDÉO (AnimationLogo.mp4)                    -->
-    <!-- targetIndex: 0 = 1ère image dans targets.mind               -->
-    <!-- ============================================================ -->
-    <!-- <a-entity mindar-image-target="targetIndex: 0"> -->
-    <!-- a-plane affiche la vidéo comme texture sur un plan plat -->
-    <!-- Ajustez width/height selon le ratio de votre vidéo (ex: 16:9 → width="1.6" height="0.9") -->
-    <!-- <a-plane
-          src="#arVideo"
-          position="0 0 0"
-          width="1"
-          height="0.55"
-          rotation="0 0 0"
-          material="src: #arVideo; shader: flat"
-        ></a-plane>
-      </a-entity> -->
 
     <!-- ============================================================ -->
     <!-- [ CIBLE 0 ] →  IMAGE 1 (singe1.jpeg)                          -->
@@ -405,9 +362,9 @@
     <!-- ============================================================ -->
     <a-entity mindar-image-target="targetIndex: 0" data-link="https://www.instagram.com/shoot_art.kenny/"
       data-link-text="Réseau social">
-      <a-plane src="#image-cible1" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339"
+      <a-plane lazy-load="src: ./Assets/singe1.jpeg; type: image" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339"
         height="0.5625" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
-        material="src: #image-cible1; shader: flat; transparent: true"
+        material="shader: flat; transparent: true"
         scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
     </a-entity>
 
@@ -494,6 +451,69 @@
         return ctx;
       };
     })();
+
+    // ============================================================
+    // Composant lazy-load
+    // Charge l'élément (image, vidéo, modèle 3D) à la demande
+    // UNIQUEMENT lorsque la caméra détecte la cible correspondante
+    // Évite le téléchargement inutile et la surconsommation de données.
+    // ============================================================
+    AFRAME.registerComponent('lazy-load', {
+      schema: {
+        src: { type: 'string', default: '' },
+        type: { type: 'string', default: 'image' } // 'image', 'video', ou 'model'
+      },
+      init: function () {
+        this.loaded = false;
+        const parent = this.el.closest('[mindar-image-target]') || this.el.parentEl;
+        if (!parent) return;
+
+        parent.addEventListener('targetFound', () => {
+          if (this.loaded || !this.data.src) return;
+          this.loadAsset();
+        });
+      },
+      loadAsset: function () {
+        this.loaded = true;
+        const el = this.el;
+        const src = this.data.src;
+        const type = this.data.type;
+
+        if (type === 'image') {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            el.setAttribute('material', {
+              src: img,
+              shader: 'flat',
+              transparent: true
+            });
+            if (el.components['image-aspect-ratio']) {
+              el.components['image-aspect-ratio'].applyRatio?.(img);
+            }
+          };
+          img.src = src;
+        } else if (type === 'video') {
+          let video = document.createElement('video');
+          video.src = src;
+          video.crossOrigin = 'anonymous';
+          video.preload = 'auto';
+          video.loop = true;
+          video.setAttribute('playsinline', '');
+          video.setAttribute('webkit-playsinline', '');
+          document.body.appendChild(video);
+          video.style.display = 'none';
+
+          el.setAttribute('material', {
+            src: video,
+            shader: 'flat'
+          });
+          video.play().catch(() => {});
+        } else if (type === 'model') {
+          el.setAttribute('gltf-model', src);
+        }
+      }
+    });
 
     // ============================================================
     // Composant touch-rotate
@@ -708,7 +728,7 @@
           return (knownH !== undefined ? knownH : 1) * self.data.baseWidth;
         };
 
-        const applyRatio = (img) => {
+        this.applyRatio = (img) => {
           if (!img || !img.naturalWidth || !img.naturalHeight) return;
 
           const targetW = self.data.baseWidth;
@@ -760,9 +780,9 @@
           }
           if (img) {
             if (img.complete && img.naturalWidth) {
-              applyRatio(img);
+              self.applyRatio(img);
             } else {
-              img.addEventListener('load', () => applyRatio(img), { once: true });
+              img.addEventListener('load', () => self.applyRatio(img), { once: true });
             }
           }
         };
