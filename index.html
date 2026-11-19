@@ -24,6 +24,78 @@
 
   <!-- Style pour le contrôle du son de la vidéo en AR -->
   <style>
+    /* UI du carrousel (Boutons flèches & Dots) */
+    .carousel-ui-container {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .carousel-ui-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 20px) scale(0.9);
+    }
+
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(15, 15, 25, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+      user-select: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .nav-btn:active {
+      transform: scale(0.9);
+      background: rgba(35, 35, 50, 0.9);
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+    }
+
+    .carousel-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(15, 15, 25, 0.6);
+      padding: 8px 14px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .dot.active {
+      background: #60a5fa;
+      transform: scale(1.3);
+    }
+
     /* Bouton flottant de contrôle du son */
     .sound-control-container {
       position: fixed;
@@ -362,52 +434,66 @@
     <!-- ============================================================ -->
     <a-entity mindar-image-target="targetIndex: 0" data-link="https://www.instagram.com/shoot_art.kenny/"
       data-link-text="Réseau social">
-      <a-plane lazy-load="src: ./Assets/singe1.jpeg; type: image" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339"
-        height="0.5625" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
-        material="shader: flat; transparent: true"
+      <a-plane lazy-load="src: ./Assets/singe1.jpeg; type: image"
+        image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339" height="0.5625"
+        position="0 0 0.01" scale="0 0 0" rotation="0 0 0" material="shader: flat; transparent: true"
         scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
     </a-entity>
 
-    <!-- ============================================================ -->
-    <!-- [ CIBLE 1 ] →  IMAGE 2 (singe2.jpeg)                          -->
-    <!-- targetIndex: 1 = 2ème image dans targets.mind                -->
-    <!-- ============================================================ -->
-    <!-- <a-entity mindar-image-target="targetIndex: 1">
-      <a-plane src="#image-cible2" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 1.4989" width="1"
-        height="0.75" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
-        material="src: #image-cible2; shader: flat; transparent: true"
-        scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
-    </a-entity> -->
+    <!-- --------------------- -->
 
-    <!-- ============================================================ -->
-    <!-- [ CIBLE 2 ] →  IMAGE 3 (singe3.jpg)                           -->
-    <!-- targetIndex: 2 = 3ème image dans targets.mind                -->
-    <!-- ============================================================ -->
-    <!-- <a-entity mindar-image-target="targetIndex: 2">
-      <a-plane src="#image-cible3" image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 1.5" width="0.8438"
-        height="1.5" position="0 0 0.01" scale="0 0 0" rotation="0 0 0"
-        material="src: #image-cible3; shader: flat; transparent: true"
-        scale-on-target="targetScale: 1 1 1; durIn: 700; durOut: 400"></a-plane>
-    </a-entity> -->
+    <a-entity id="ar-target" mindar-image-target="targetIndex: 1">
 
-    <!-- ============================================================ -->
-    <!-- [ CIBLE 3 ] → VIDÉO supplémentaire                          -->
-    <!-- targetIndex: 3 = 4ème image dans targets.mind               -->
-    <!-- ============================================================ -->
+      <!-- CARROUSEL MULTI-PHOTOS (PHOTO STUDIO CULINAIRE & ÉVÉNEMENTIEL) -->
+      <a-entity id="carousel-container" position="0 0 0.01">
 
-    <!-- <a-entity mindar-image-target="targetIndex: 3"> -->
+        <!-- Photo 1 : Culinaire -->
+        <a-plane class="carousel-slide" lazy-load="src: ./Assets/singe1.jpeg; type: image"
+          image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.666" width="1" height="0.666" position="0 0 0"
+          visible="true" scale="1 1 1" material="shader: flat; transparent: true"
+          data-link="https://www.instagram.com/shoot_art.kenny/" data-link-text="Voir le portfolio Culinaire">
+        </a-plane>
 
-    <!-- <a-plane
-          src="#video-cible3"
-          position="0 0 0"
-          width="1"
-          height="0.55"
-          rotation="0 0 0"
-          material="src: #video-cible3; shader: flat"
-        ></a-plane>
-      </a-entity> -->
+        <!-- Photo 2 : Événementiel -->
+        <a-plane class="carousel-slide" lazy-load="src: ./Assets/singe1.jpeg; type: image"
+          image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.666" width="1" height="0.666" position="0 0 0"
+          visible="false" scale="0 0 0" material="shader: flat; transparent: true"
+          data-link="https://www.instagram.com/shoot_art.kenny/" data-link-text="Découvrir l'Événementiel">
+        </a-plane>
+
+        <!-- Photo 3 : Culinaire / Studio -->
+        <a-plane class="carousel-slide" lazy-load="src: ./Assets/singe1.jpeg; type: image"
+          image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.666" width="1" height="0.666" position="0 0 0"
+          visible="false" scale="0 0 0" material="shader: flat; transparent: true"
+          data-link="https://www.instagram.com/shoot_art.kenny/" data-link-text="Réserver une séance photo">
+        </a-plane>
+
+      </a-entity>
+
+    </a-entity>
 
   </a-scene>
+
+  <!-- INTERFACE DE NAVIGATION (UI 2D) -->
+  <div id="carousel-ui" class="carousel-ui-container hidden">
+    <button id="prev-btn" class="nav-btn" aria-label="Photo précédente">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
+    <div class="carousel-dots" id="dots-container">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
+    <button id="next-btn" class="nav-btn" aria-label="Photo suivante">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+  </div>
 
   <script>
     // ============================================================
@@ -508,7 +594,7 @@
             src: video,
             shader: 'flat'
           });
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         } else if (type === 'model') {
           el.setAttribute('gltf-model', src);
         }
@@ -1090,6 +1176,96 @@
         window.addEventListener("DOMContentLoaded", setupTargets);
       }
     })();
+
+
+    // ------------
+    // Logique de navigation du Carrousel
+    document.addEventListener('DOMContentLoaded', () => {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.dot');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+      const carouselUI = document.getElementById('carousel-ui');
+      const scanPrompt = document.getElementById('scan-prompt');
+      const linkContainer = document.getElementById('link-action-container');
+      const linkBtn = document.getElementById('link-action-btn');
+      const linkText = document.getElementById('link-action-text');
+      const targetEntity = document.getElementById('ar-target');
+
+      let currentIndex = 0;
+
+      function updateCarousel(newIndex) {
+        if (newIndex === currentIndex) return;
+
+        const currentSlide = slides[currentIndex];
+        const nextSlide = slides[newIndex];
+
+        // Animation de sortie (Fondu / Réduction)
+        currentSlide.setAttribute('animation__scale', {
+          property: 'scale',
+          to: '0 0 0',
+          dur: 200,
+          easing: 'easeInQuad'
+        });
+
+        setTimeout(() => {
+          currentSlide.setAttribute('visible', 'false');
+
+          // Animation d'entrée (Pop / Agrandissement)
+          nextSlide.setAttribute('visible', 'true');
+          nextSlide.setAttribute('animation__scale', {
+            property: 'scale',
+            from: '0 0 0',
+            to: '1 1 1',
+            dur: 300,
+            easing: 'easeOutBack'
+          });
+
+          // Mise à jour des points de sélection
+          dots[currentIndex].classList.remove('active');
+          dots[newIndex].classList.add('active');
+
+          currentIndex = newIndex;
+          updateLinkUI();
+        }, 200);
+      }
+
+      function updateLinkUI() {
+        const activeSlide = slides[currentIndex];
+        const url = activeSlide.getAttribute('data-link');
+        const text = activeSlide.getAttribute('data-link-text');
+
+        if (url) {
+          linkBtn.href = url;
+          linkText.textContent = text || 'En savoir plus';
+          linkContainer.classList.remove('hidden');
+        } else {
+          linkContainer.classList.add('hidden');
+        }
+      }
+
+      prevBtn.addEventListener('click', () => {
+        const index = (currentIndex - 1 + slides.length) % slides.length;
+        updateCarousel(index);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const index = (currentIndex + 1) % slides.length;
+        updateCarousel(index);
+      });
+
+      targetEntity.addEventListener('targetFound', () => {
+        scanPrompt.classList.add('hidden');
+        carouselUI.classList.remove('hidden');
+        updateLinkUI();
+      });
+
+      targetEntity.addEventListener('targetLost', () => {
+        scanPrompt.classList.remove('hidden');
+        carouselUI.classList.add('hidden');
+        linkContainer.classList.add('hidden');
+      });
+    });
   </script>
 </body>
 
