@@ -413,7 +413,7 @@
 <body>
   <!-- Scène AR -->
   <a-scene
-    mindar-image="imageTargetSrc: ./Assets/targets2.mind; filterMinCF: 0.001; filterBeta: 0.01; warmupTolerance: 2; missTolerance: 15;"
+    mindar-image="imageTargetSrc: ./Assets/targets3.mind; filterMinCF: 0.001; filterBeta: 0.01; warmupTolerance: 2; missTolerance: 15;"
     color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 
@@ -432,7 +432,7 @@
     <!-- [ CIBLE 0 ] →  IMAGE 1 (singe1.jpeg)                          -->
     <!-- targetIndex: 0 = 1ère image dans targets.mind                -->
     <!-- ============================================================ -->
-    <a-entity mindar-image-target="targetIndex: 1" data-link="https://www.instagram.com/shoot_art.kenny/"
+    <a-entity mindar-image-target="targetIndex: 0" data-link="https://www.instagram.com/shoot_art.kenny/"
       data-link-text="Réseau social">
       <a-plane lazy-load="src: ./Assets/singe1.jpeg; type: image"
         image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.5625" width="0.4339" height="0.5625"
@@ -442,7 +442,7 @@
 
     <!-- --------------------- -->
 
-    <a-entity id="ar-target" mindar-image-target="targetIndex: 0">
+    <a-entity id="ar-target" mindar-image-target="targetIndex: 1">
 
       <!-- CARROUSEL MULTI-PHOTOS (PHOTO STUDIO CULINAIRE & ÉVÉNEMENTIEL) -->
       <a-entity id="carousel-container" position="0 0 0.01">
@@ -465,14 +465,14 @@
         <a-plane class="carousel-slide" lazy-load="src: ./Assets/evenement.jpg; type: image"
           image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.666" width="1" height="0.666" position="0 0 0"
           visible="false" scale="0 0 0" material="shader: flat; transparent: true"
-          data-link="https://shootart.my.canva.site/portfolio" data-link-text="Découvrir l'Événementiel">
+          data-link="https://shootart.my.canva.site/portfolio" data-link-text="Voir le portfolio Événementiel">
         </a-plane>
 
         <!-- Photo 4 : Produit -->
         <a-plane class="carousel-slide" lazy-load="src: ./Assets/produit.jpg; type: image"
           image-aspect-ratio="fit: contain; baseWidth: 1; targetHeight: 0.666" width="1" height="0.666" position="0 0 0"
           visible="false" scale="0 0 0" material="shader: flat; transparent: true"
-          data-link="https://shootart.my.canva.site/galerie-packshot" data-link-text="Réserver une séance photo">
+          data-link="https://shootart.my.canva.site/galerie-packshot" data-link-text="Voir le portfolio Produit">
         </a-plane>
 
       </a-entity>
